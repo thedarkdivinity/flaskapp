@@ -1,9 +1,12 @@
-from flask import Flask, render_template, request,session
+from flask import Flask, render_template, request, session, redirect
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.session import Session
-import math
+from werkzeug.utils import secure_filename
+from flask_mail import Mail
 import json
-local_server = True
+import os
+import math
+from datetime import datetime
+
 
 with open('config.json', 'r') as c:
     params = json.load(c)["params"]
@@ -11,7 +14,7 @@ with open('config.json', 'r') as c:
 
 app = Flask(__name__)
 app.secret_key = 'the random string'
-
+app.config['UPLOAD_FOLDER']=params['upload_location']
 app.config['SQLALCHEMY_DATABASE_URI'] = params['local_uri']
 
 
@@ -114,10 +117,45 @@ def login():
 
 @app.route("/edit/<string:sno>",methods=['GET','POST'])
 def edit(sno):
-    post=Posts.query.filter_by(sno=sno).first()
-    return render_template('edit.html',post=post)
+    if ('user' in session and session['user'] =='admin'):
+        if request.method == 'POST':
+            box_title = request.form.get('title')
+            tline = request.form.get('tagline')
+            slug = request.form.get('slug')
+            content = request.form.get('content')
+            date = datetime.now()
+            if sno=='0':
+                post = Posts(title=box_title, slug=slug, content=content, tagline=tline,date=date)
+                db.session.add(post)
+                db.session.commit()
+            else:
+                post = Posts.query.filter_by(sno=sno).first()
+                post.title = box_title
+                post.slug = slug
+                post.content = content
+                post.tagline = tline
+                
+                db.session.commit()
+                return redirect('/edit/'+sno)
+        post = Posts.query.filter_by(sno=sno).first()
+        return render_template('edit.html', params=params, post=post, sno=sno)
 
-
-
- 
+@app.route("/delete/<string:sno>", methods = ['GET', 'POST'])
+def delete(sno):
+    if ('user' in session and session['user'] == 'admin'):
+        post = Posts.query.filter_by(sno=sno).first()
+        db.session.delete(post)
+        db.session.commit()
+    return redirect('/login')
+@app.route("/uploader", methods = ['GET', 'POST'])
+def uploader():
+    if ('user' in session and session['user'] =='admin'):
+        if (request.method == 'POST'):
+            f= request.files['file1']
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(f.filename) ))
+            return "Uploaded successfully"
+@app.route("/logout")
+def logout():
+    session.pop('user')
+    return redirect('/login')
 app.run(debug=True,port=5500)
