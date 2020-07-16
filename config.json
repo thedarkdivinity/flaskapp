@@ -1,9 +1,9 @@
 {
     "params":{
         "local_server":"True",
-        "local_uri":"mysql://root:@127.0.0.1:3306/codingthunder",
-        "prod_uri":"mysql://root:@127.0.0.1:3306/codingthunder",
-        "site_name":"Coding Thunder",
+        "local_uri":"mysql://root:@127.0.0.1:3306/studentblog",
+        "prod_uri":"mysql://root:@127.0.0.1:3306/studentblog",
+        "site_name":"studentblog",
         "fb_url":"https://www.facebook.com",
         "twitter_url":"https://www.twitter.com",
         "github_url":"https://www.github.com",
